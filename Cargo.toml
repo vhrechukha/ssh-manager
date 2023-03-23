@@ -1,0 +1,16 @@
+[package]
+name = "ssh-manager"
+version = "0.1.0"
+edition = "2023"
+
+[dependencies]
+fs = "*"
+dirs = "*"
+serde_json = "*"
+dialoguer = "*"
+serde = { version = "1.0.129", features = ["derive"] }
+clap = "*"
+execute = "*"
+imgui = "*"
+clipboard = "*"
+glium = "*"
