@@ -1,4 +1,5 @@
 use crate::repositories::config::{Repository, FindIdentitiesError, DeleteError};
+use std::convert::TryFrom;
 use std::sync::Arc;
 use super::entities::{Alias};
 use dialoguer::Select;
