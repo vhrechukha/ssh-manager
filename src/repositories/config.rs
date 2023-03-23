@@ -34,6 +34,8 @@ pub trait Repository: Send + Sync {
 
     fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesError>;
 
+    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesError>;
+
     fn delete(&self, alias: Alias) -> Result<(), DeleteError>;
 }
 
@@ -138,6 +140,25 @@ impl Repository for InMemoryRepository {
         };
 
         let identities = lock.to_vec();
+        Ok(identities)
+    }
+
+    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesError> {
+        if self.error {
+            return Err(FindIdentitiesError::Unknown);
+        }
+
+        let lock = match self.identities.lock() {
+            Ok(lock) => lock,
+            _ => return Err(FindIdentitiesError::Unknown),
+        };
+
+        let identities = lock
+            .to_vec()
+            .into_iter()
+            .filter(|identity| identity.hostname == hostname)
+            .collect();
+
         Ok(identities)
     }
 

@@ -2,6 +2,7 @@ use std::path::{Path};
 use std::{convert::TryFrom, process::Stdio};
 use std::sync::Arc;
 
+use crate::domain;
 use crate::repositories::config::{Repository, FindIdentityError, FindIdentitiesError};
 
 use dialoguer::Select;
@@ -10,12 +11,14 @@ use execute::Execute;
 
 use super::entities::{ConfigIdentity, Alias};
 
+#[derive(Clone, Debug)]
 pub struct Response {
     pub alias: String,
     pub hostname: String,
     pub config_path: String,
 }
 
+#[derive(Debug)]
 pub enum Error {
     BadRequest,
     NotFound,
@@ -50,40 +53,79 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<Response, Error> {
 
             let identity_alias = &selections[selection];
 
-            let config_identity = match Alias::try_from(identity_alias.to_owned()) {
+            let config_identity: Result<Response, Error> = match Alias::try_from(identity_alias.to_owned()) {
                 Ok(alias) => match repo.find_one(alias) {
                    Ok(ConfigIdentity {
                        hostname,
                        config_path,
                        alias,
-                   }) => {
-                       let config_path_identity = String::from(config_path);
-                       let path = Path::new(&dirs::home_dir().unwrap()).join(&config_path_identity);
-       
-                       let mut command = execute::command_args!("ssh-add", path);
-                   
-                       command.stdout(Stdio::piped());
-                       
-                       let output = command.execute_output().unwrap();
-                   
-                       println!("Output: {}", String::from_utf8(output.stdout).unwrap());
-       
-                       return {Ok(Response {
+                   }) => Ok(Response {
                            alias: String::from(alias),
-                           config_path: config_path_identity,
+                           config_path: String::from(config_path),
                            hostname: String::from(hostname),
-                       })
-                   }
-               },
+                       }),
                    Err(FindIdentityError::NotFound) => Err(Error::NotFound),
                    Err(FindIdentityError::Unknown) => Err(Error::Unknown),
-               },
-               _ => Err(Error::BadRequest),
-           };
+            }
+                Err(_) => todo!(), };
+            println!("config_identity: {:#?}", config_identity);
 
-           return config_identity;
+
+            let unwrapped_config_identity = config_identity.unwrap();
+            println!("unwrapped_config_identity: {:#?}", unwrapped_config_identity);
+
+            // REFACTOR
+            let identities_with_the_same_host = match repo.find_all_with_hostname(
+                domain::entities::HostName(unwrapped_config_identity.clone().hostname)
+            ) {
+                Ok(identities) => Ok(identities
+                    .into_iter()
+                    .map(|p| Response {
+                        alias: String::from(p.alias),
+                        config_path: p.config_path.into(),
+                        hostname: String::from(p.hostname),
+                    })
+                    .collect::<Vec<Response>>()),
+                Err(FindIdentitiesError::Unknown) => Err(Error::Unknown),
+            };
+            let identities_with_the_same_host_unwrapped = identities_with_the_same_host.unwrap();
+            let identities_with_the_same_host_length = identities_with_the_same_host_unwrapped.len();
+            if identities_with_the_same_host_length >= 1 {
+                for n in 0..identities_with_the_same_host_length {
+                    let config_path_identity = String::from(identities_with_the_same_host_unwrapped[n].clone().config_path);
+                    let path = Path::new(&dirs::home_dir().unwrap()).join(&config_path_identity);
+        
+                    println!("Path: {}", path.to_string_lossy());
+
+                    let mut command = execute::command_args!("ssh-add", "-d", path);
+
+                    println!("Command: {:?}", command);
+                
+                    command.stdout(Stdio::piped());
+                    
+                    let output = command.execute_output().unwrap();
+                
+                    println!("Output of deleted config identity: {}", String::from_utf8(output.stdout).unwrap());
+                }
+            }
+
+            let config_path_identity = String::from(unwrapped_config_identity.clone().config_path);
+            let path = Path::new(&dirs::home_dir().unwrap()).join(&config_path_identity);
+            println!("path: {:#?}", path);
+
+            let mut command = execute::command_args!("ssh-add", path);
+        
+            command.stdout(Stdio::piped());
+            
+            let output = command.execute_output().unwrap();
+        
+            println!("Output: {}", String::from_utf8(output.stdout).unwrap());
+
+           return Ok(unwrapped_config_identity);
         },
         Err(_err) => {
+            println!("Error: {:#?}", _err);
+
             panic!()
         }
     }

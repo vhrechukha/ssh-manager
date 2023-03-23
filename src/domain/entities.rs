@@ -2,8 +2,8 @@ use std::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct HostName(String);
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct HostName(pub String);
 
 impl TryFrom<String> for HostName {
     type Error = ();
