@@ -51,9 +51,24 @@ struct ConfigIdentities {
 
 impl InMemoryRepository {
     pub fn new() -> Self {
+        let path_to_config = "config.json";
+        let config = std::path::Path::new(path_to_config).exists();
+
+        if !config {
+            let identities_file: ConfigIdentities = ConfigIdentities {
+                identities: vec![],
+            };
+
+            std::fs::write(
+                path_to_config,
+                serde_json::to_string_pretty(&identities_file).unwrap(),
+            )
+            .unwrap();
+        }
+
         let config = {
             // Load the first file into a string.
-            let text = std::fs::read_to_string("config.json").unwrap();
+            let text = std::fs::read_to_string(path_to_config).unwrap();
     
             // Parse the string into a dynamically-typed JSON structure.
             serde_json::from_str::<ConfigIdentities>(&text).unwrap()
