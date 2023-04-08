@@ -11,6 +11,3 @@ dialoguer = "*"
 serde = { version = "1.0.129", features = ["derive"] }
 clap = "*"
 execute = "*"
-imgui = "*"
-clipboard = "*"
-glium = "*"
