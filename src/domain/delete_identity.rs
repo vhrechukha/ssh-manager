@@ -36,14 +36,12 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), Error> {
 
             // Move it to cli
             let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Pick your flavor")
+            .with_prompt("Pick your Config Identity")
             .default(0)
             .items(&selections[..])
             .interact()
             .unwrap();
     
-            println!("You decided to delete this identity: {}", selections[selection]);
-
             let identity_alias = &selections[selection];
 
            match Alias::try_from(identity_alias.to_owned()) {

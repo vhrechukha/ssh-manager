@@ -43,7 +43,7 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<Response, Error> {
             let selections: &Vec<String> = &val.into_iter().map(|x| x.alias.to_string()).collect();
 
             let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Pick your flavor")
+            .with_prompt("Pick your Config Identity")
             .default(0)
             .items(&selections[..])
             .interact()
@@ -68,11 +68,8 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<Response, Error> {
                    Err(FindIdentityError::Unknown) => Err(Error::Unknown),
             }
                 Err(_) => todo!(), };
-            println!("config_identity: {:#?}", config_identity);
-
 
             let unwrapped_config_identity = config_identity.unwrap();
-            println!("unwrapped_config_identity: {:#?}", unwrapped_config_identity);
 
             // REFACTOR
             let identities_with_the_same_host = match repo.find_all_with_hostname(
@@ -95,32 +92,23 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<Response, Error> {
                     let config_path_identity = String::from(identities_with_the_same_host_unwrapped[n].clone().config_path);
                     let path = Path::new(&dirs::home_dir().unwrap()).join(&config_path_identity);
         
-                    println!("Path: {}", path.to_string_lossy());
-
                     let mut command = execute::command_args!("ssh-add", "-d", path);
-
-                    println!("Command: {:?}", command);
                 
                     command.stdout(Stdio::piped());
                     
-                    let output = command.execute_output().unwrap();
-                
-                    println!("Output of deleted config identity: {}", String::from_utf8(output.stdout).unwrap());
+                    command.execute_output().unwrap();
                 }
             }
 
             let config_path_identity = String::from(unwrapped_config_identity.clone().config_path);
             let path = Path::new(&dirs::home_dir().unwrap()).join(&config_path_identity);
-            println!("path: {:#?}", path);
 
             let mut command = execute::command_args!("ssh-add", path);
         
             command.stdout(Stdio::piped());
             
-            let output = command.execute_output().unwrap();
+            command.execute_output().unwrap();
         
-            println!("Output: {}", String::from_utf8(output.stdout).unwrap());
-
            return Ok(unwrapped_config_identity);
         },
         Err(_err) => {
