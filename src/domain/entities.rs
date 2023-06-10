@@ -72,13 +72,3 @@ pub struct ConfigIdentity {
     pub config_path: ConfigPath,
     pub alias: Alias,
 }
-
-impl ConfigIdentity {
-    pub fn new(alias: Alias, hostname: HostName, config_path: ConfigPath) -> Self {
-        Self {
-            alias,
-            hostname,
-            config_path,
-        }
-    }
-}

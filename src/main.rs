@@ -2,11 +2,11 @@ mod cli;
 mod domain;
 mod repositories;
 
-use repositories::config::InMemoryRepository;
 use std::sync::Arc;
+use repositories::config::{Repository, FileRepository};
 
 fn main() {
-    let repo = Arc::new(InMemoryRepository::new());
+    let repository: Arc<dyn Repository> = Arc::new(FileRepository::new());
 
-    cli::run(repo);
+    cli::run(repository);
 }

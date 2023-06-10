@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize, Serializer};
+use std::fs;
 
 use crate::domain::entities::{ConfigIdentity, HostName, ConfigPath, Alias};
-use std::sync::{Mutex, MutexGuard};
+use std::{path::PathBuf};
 
 pub enum AddIdentityError {
     Conflict,
@@ -22,12 +22,12 @@ pub enum DeleteError {
     NotFound,
 }
 
-pub trait Repository: Send + Sync {
+pub trait Repository {
     fn add(
         &self,
         alias: Alias,
         hostname: HostName,
-        path: ConfigPath,
+        config_path: ConfigPath,
     ) -> Result<ConfigIdentity, AddIdentityError>;
 
     fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityError>;
@@ -39,171 +39,115 @@ pub trait Repository: Send + Sync {
     fn delete(&self, alias: Alias) -> Result<(), DeleteError>;
 }
 
-pub struct InMemoryRepository {
-    error: bool,
-    identities: Mutex<Vec<ConfigIdentity>>,
+pub struct FileRepository {
+    data_file_path: PathBuf,
 }
 
-#[derive(Clone, Deserialize, Serialize, Debug)]
-struct ConfigIdentities {
-    identities: Vec<ConfigIdentity>,
-}
-
-impl InMemoryRepository {
+impl FileRepository {
     pub fn new() -> Self {
-        let path_to_config = "config.json";
-        let config = std::path::Path::new(path_to_config).exists();
+        let home_dir = dirs::home_dir().expect("Failed to get home directory");
+        let config_dir = home_dir.join(".config");
+        let brew_package_dir = config_dir.join("ssh_manager");
 
-        if !config {
-            let identities_file: ConfigIdentities = ConfigIdentities {
-                identities: vec![],
-            };
+        // Create the directory if it doesn't exist
+        fs::create_dir_all(&brew_package_dir)
+            .expect("Failed to create brew_package directory");
 
-            std::fs::write(
-                path_to_config,
-                serde_json::to_string_pretty(&identities_file).unwrap(),
-            )
-            .unwrap();
+        let data_file_path = brew_package_dir.join("config.json");
+
+        FileRepository {
+            data_file_path,
+        }
+    }
+
+    fn read_data(&self) -> Result<Vec<ConfigIdentity>, std::io::Error> {
+        if !self.data_file_path.exists() {
+            // If the file doesn't exist, return an empty vector
+            return Ok(Vec::new());
         }
 
-        let config = {
-            // Load the first file into a string.
-            let text = std::fs::read_to_string(path_to_config).unwrap();
-    
-            // Parse the string into a dynamically-typed JSON structure.
-            serde_json::from_str::<ConfigIdentities>(&text).unwrap()
-        };
+        let data = fs::read_to_string(&self.data_file_path)?;
+        let identities: Vec<ConfigIdentity> = serde_json::from_str(&data)?;
 
-        let identities = Mutex::new(config.identities);
+        Ok(identities)
+    }
 
-        Self {
-            error: false,
-            identities,
-        }
+    fn write_data(&self, identities: &[ConfigIdentity]) -> Result<(), std::io::Error> {
+        let data = serde_json::to_string(identities)?;
+        fs::write(&self.data_file_path, data)
     }
 }
 
-pub struct MutexSerializer<'a, T>(pub MutexGuard<'a, T>);
-
-impl<T: Serialize> Serialize for MutexSerializer<'_, T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        self.0.serialize(serializer)
-    }
-}
-
-impl Repository for InMemoryRepository {
+impl Repository for FileRepository {
     fn add(
         &self,
         alias: Alias,
         hostname: HostName,
-        path: ConfigPath,
+        config_path: ConfigPath,
     ) -> Result<ConfigIdentity, AddIdentityError> {
-        if self.error {
-            return Err(AddIdentityError::Unknown);
-        }
+        let mut identities = self.read_data().map_err(|_| AddIdentityError::Unknown)?;
 
-        let mut lock = match self.identities.lock() {
-            Ok(lock) => lock,
-            _ => return Err(AddIdentityError::Unknown),
+        let new_identity = ConfigIdentity {
+            alias: alias.clone(),
+            hostname: hostname.clone(),
+            config_path: config_path.clone(),
         };
 
-        if lock.iter().any(|identity| identity.alias == alias) {
+        if identities.iter().any(|i| i.alias == alias) {
             return Err(AddIdentityError::Conflict);
         }
 
-        let identity = ConfigIdentity::new(alias, hostname, path);
-        lock.push(identity.clone());
+        identities.push(new_identity.clone());
 
-        let final_result = { ConfigIdentities {
-            identities: lock.to_vec(),
-        } };
-        std::fs::write(
-            "config.json",
-            serde_json::to_string_pretty(&final_result).unwrap(),
-        )
-        .unwrap();
-        Ok(identity)
+        if let Err(_) = self.write_data(&identities) {
+            return Err(AddIdentityError::Conflict);
+        }
+
+        Ok(new_identity)
     }
 
     fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityError> {
-        if self.error {
-            return Err(FindIdentityError::Unknown);
-        }
+        let identities = self.read_data().map_err(|_| FindIdentityError::NotFound)?;
 
-        let lock = match self.identities.lock() {
-            Ok(lock) => lock,
-            _ => return Err(FindIdentityError::Unknown),
-        };
-
-        match lock.iter().find(|identity| identity.alias == alias) {
-            Some(identity) => Ok(identity.clone()),
-            None => Err(FindIdentityError::NotFound),
+        if let Some(identity) = identities.iter().find(|i| i.alias == alias) {
+            Ok(identity.clone())
+        } else {
+            Err(FindIdentityError::NotFound)
         }
     }
 
     fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesError> {
-        if self.error {
-            return Err(FindIdentitiesError::Unknown);
-        }
+        let identities = self.read_data().map_err(|_| FindIdentitiesError::Unknown)?;
 
-        let lock = match self.identities.lock() {
-            Ok(lock) => lock,
-            _ => return Err(FindIdentitiesError::Unknown),
-        };
-
-        let identities = lock.to_vec();
         Ok(identities)
     }
 
     fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesError> {
-        if self.error {
-            return Err(FindIdentitiesError::Unknown);
-        }
+        let identities = self.read_data().map_err(|_| FindIdentitiesError::Unknown)?;
 
-        let lock = match self.identities.lock() {
-            Ok(lock) => lock,
-            _ => return Err(FindIdentitiesError::Unknown),
-        };
-
-        let identities = lock
-            .to_vec()
+        let filtered_identities: Vec<ConfigIdentity> = identities
             .into_iter()
-            .filter(|identity| identity.hostname == hostname)
+            .filter(|i| i.hostname == hostname)
             .collect();
 
-        Ok(identities)
+        Ok(filtered_identities)
     }
 
     fn delete(&self, alias: Alias) -> Result<(), DeleteError> {
-        if self.error {
-            return Err(DeleteError::Unknown);
+        let mut identities = self.read_data().map_err(|_| DeleteError::Unknown)?;
+
+        if let Some(index) = identities.iter().position(|i| i.alias == alias) {
+            identities.remove(index);
+
+            if let Err(_) = self.write_data(&identities) {
+                return Err(DeleteError::Unknown);
+            }
+        } else {
+            return Err(DeleteError::NotFound);
         }
-
-        let mut lock = match self.identities.lock() {
-            Ok(lock) => lock,
-            _ => return Err(DeleteError::Unknown),
-        };
-
-        let index = match lock.iter().position(|p| p.alias == alias) {
-            Some(index) => index,
-            None => return Err(DeleteError::NotFound),
-        };
-
-        lock.remove(index);
-
-        let final_result = { ConfigIdentities {
-            identities: lock.to_vec(),
-        } };
-
-        std::fs::write(
-            "config.json",
-            serde_json::to_string_pretty(&final_result).unwrap(),
-        )
-        .unwrap();
 
         Ok(())
     }
 }
+
+
