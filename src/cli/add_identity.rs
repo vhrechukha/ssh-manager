@@ -1,6 +1,6 @@
 use crate::cli::prompts::{prompt_alias, prompt_hostname, prompt_path};
 use crate::domain::create_identity;
-use crate::repositories::config::Repository;
+use crate::repositories::traits::Repository;
 use std::sync::Arc;
 
 pub fn run(repo: Arc<dyn Repository>) {

@@ -3,7 +3,8 @@ use std::{convert::TryFrom, process::Stdio};
 use std::sync::Arc;
 
 use crate::domain;
-use crate::repositories::config::{Repository, FindIdentityError, FindIdentitiesError};
+use crate::repositories::config::{FindIdentityError, FindIdentitiesError};
+use crate::repositories::traits::Repository;
 
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;

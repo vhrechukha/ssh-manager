@@ -1,4 +1,4 @@
-use crate::repositories::config::Repository;
+use crate::repositories::traits::Repository;
 use crate::domain::{use_identity, self};
 use std::sync::Arc;
 

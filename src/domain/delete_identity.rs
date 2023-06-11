@@ -1,4 +1,5 @@
-use crate::repositories::config::{Repository, FindIdentitiesError, DeleteError};
+use crate::repositories::config::{FindIdentitiesError, DeleteError};
+use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
 use super::entities::{Alias};

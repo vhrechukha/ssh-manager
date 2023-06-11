@@ -3,7 +3,8 @@ mod use_identity;
 mod delete_identity;
 mod prompts;
 
-use crate::{repositories::config::Repository, domain};
+use crate::repositories::traits::Repository;
+use crate::domain;
 use dialoguer::{theme::ColorfulTheme, Select};
 use std::sync::Arc;
 

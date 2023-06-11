@@ -1,5 +1,5 @@
 use crate::domain::delete_identity;
-use crate::repositories::config::Repository;
+use crate::repositories::traits::Repository;
 use std::sync::Arc;
 
 pub fn run(repo: Arc<dyn Repository>) {
