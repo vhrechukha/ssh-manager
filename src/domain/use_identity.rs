@@ -40,7 +40,11 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<Response, Error> {
 
     match identities {
         Ok(val) => {
-            let selections: &Vec<String> = &val.into_iter().map(|x| x.alias.to_string()).collect();
+            let selections: Vec<String> = val.into_iter().map(|x| x.alias.to_string()).collect();
+
+            if selections.is_empty() {
+                return Err(Error::NotFound);
+            }
 
             let selection = Select::with_theme(&ColorfulTheme::default())
             .with_prompt("Pick your Config Identity")

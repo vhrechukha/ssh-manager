@@ -2,30 +2,37 @@ mod add_identity;
 mod use_identity;
 mod delete_identity;
 
-use crate::repositories::config::Repository;
+use crate::{repositories::config::Repository, domain};
 use dialoguer::{theme::ColorfulTheme, Input, Select};
 use std::sync::Arc;
 
 pub fn run(repo: Arc<dyn Repository>) {
-    loop {
-        let choices = [
-            "Use Identity",
-            "Add Identity",
-            "Delete Identity",
-            "Exit",
-        ];
-        let index = match Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Make your choice")
-            .items(&choices)
-            .default(0)
-            .interact()
-        {
-            Ok(index) => index,
-            _ => continue,
-        };
-
+    while let Ok(index) = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Make your choice")
+        .items(&["Use Identity", "Add Identity", "Delete Identity", "Exit"])
+        .default(0)
+        .interact()
+    {
         match index {
-            0 => use_identity::run(repo.clone()),
+            0 => {
+                if let Err(err) = use_identity::run(repo.clone()) {
+                    match err {
+                        domain::use_identity::Error::BadRequest => {
+                            println!("The request is invalid");
+                        }
+                        domain::use_identity::Error::NotFound => {
+                            println!("The Config Identities does not exist");
+                        }
+                        domain::use_identity::Error::Unknown => {
+                            println!("An unknown error occurred");
+                        }
+                        _ => {
+                            println!("Error: {:?}", err);
+                        }
+                    }
+                    continue; // Restart the loop and prompt for index again
+                }
+            }
             1 => add_identity::run(repo.clone()),
             2 => delete_identity::run(repo.clone()),
             3 => break,

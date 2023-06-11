@@ -1,12 +1,17 @@
 use crate::repositories::config::Repository;
-use crate::domain::use_identity;
+use crate::domain::{use_identity, self};
 use std::sync::Arc;
 
-pub fn run(repo: Arc<dyn Repository>) {
-    match use_identity::execute(repo) {
-        Ok(res) => println!("Added using of Config Identity with such alias: {:?}", res.alias),
-        Err(use_identity::Error::BadRequest) => println!("The request is invalid"),
-        Err(use_identity::Error::NotFound) => println!("The Config Identity does not exist"),
-        Err(use_identity::Error::Unknown) => println!("An unknown error occurred"),
+pub fn run(repo: Arc<dyn Repository>) -> Result<(), domain::use_identity::Error> {
+    if let Err(err) = use_identity::execute(repo.clone()) {
+        match err {
+            use_identity::Error::BadRequest | use_identity::Error::NotFound | use_identity::Error::Unknown => {
+                return Err(err.into()); // Propagate the error
+            }
+        }
     }
+    
+    println!("Added using of Config Identity with such alias");
+    Ok(())
 }
+
