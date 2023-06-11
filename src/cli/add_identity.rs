@@ -1,5 +1,8 @@
 use crate::cli::prompts::{prompt_alias, prompt_hostname, prompt_path};
-use crate::domain::create_identity;
+
+use crate::domain::create_identity::{structs,enums};
+use crate::domain::create_identity::create_identity::execute;
+
 use crate::repositories::traits::Repository;
 use std::sync::Arc;
 
@@ -9,7 +12,7 @@ pub fn run(repo: Arc<dyn Repository>) {
     let config_path = prompt_path();
 
     let req = match (alias, hostname, config_path) {
-        (Ok(alias), Ok(hostname), Ok(config_path)) => create_identity::Request {
+        (Ok(alias), Ok(hostname), Ok(config_path)) => structs::CreateIdentityRequest {
             alias,
             hostname,
             config_path,
@@ -19,10 +22,10 @@ pub fn run(repo: Arc<dyn Repository>) {
             return;
         }
     };
-    match create_identity::execute(repo, req) {
+    match execute(repo, req) {
         Ok(res) => println!("Added Config Identity with such alias: {:?}", res.alias),
-        Err(create_identity::Error::BadRequest) => println!("The request is invalid"),
-        Err(create_identity::Error::Conflict) => println!("This Config Identity already exists"),
-        Err(create_identity::Error::Unknown) => println!("An unknown error occurred"),
+        Err(enums::CreateIdentityError::BadRequest) => println!("The request is invalid"),
+        Err(enums::CreateIdentityError::Conflict) => println!("This Config Identity already exists"),
+        Err(enums::CreateIdentityError::Unknown) => println!("An unknown error occurred"),
     };
 }

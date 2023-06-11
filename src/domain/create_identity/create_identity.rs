@@ -4,25 +4,10 @@ use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-pub struct Request {
-    pub alias: String,
-    pub hostname: String,
-    pub config_path: String,
-}
+use super::enums::CreateIdentityError;
+use super::structs::{CreateIdentityRequest, CreateIdentityResponse};
 
-pub struct Response {
-    pub alias: String,
-    pub hostname: String,
-    pub config_path: String,
-}
-
-pub enum Error {
-    BadRequest,
-    Conflict,
-    Unknown,
-}
-
-pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Error> {
+pub fn execute(repo: Arc<dyn Repository>, req: CreateIdentityRequest) -> Result<CreateIdentityResponse, CreateIdentityError> {
     match (
         Alias::try_from(req.alias),
         HostName::try_from(req.hostname),
@@ -33,14 +18,14 @@ pub fn execute(repo: Arc<dyn Repository>, req: Request) -> Result<Response, Erro
                 alias,
                 hostname,
                 config_path,
-            }) => Ok(Response {
+            }) => Ok(CreateIdentityResponse {
                 alias: String::from(alias),
                 config_path: String::from(config_path),
                 hostname: String::from(hostname),
             }),
-            Err(AddIdentityError::Conflict) => Err(Error::Conflict),
-            Err(AddIdentityError::Unknown) => Err(Error::Unknown),
+            Err(AddIdentityError::Conflict) => Err(CreateIdentityError::Conflict),
+            Err(AddIdentityError::Unknown) => Err(CreateIdentityError::Unknown),
         },
-        _ => Err(Error::BadRequest),
+        _ => Err(CreateIdentityError::BadRequest),
     }
 }

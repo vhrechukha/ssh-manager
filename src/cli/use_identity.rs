@@ -1,11 +1,14 @@
 use crate::repositories::traits::Repository;
-use crate::domain::{use_identity, self};
+
+use crate::domain::use_identity::{enums};
+use crate::domain::use_identity::use_identity::execute;
+
 use std::sync::Arc;
 
-pub fn run(repo: Arc<dyn Repository>) -> Result<(), domain::use_identity::Error> {
-    if let Err(err) = use_identity::execute(repo.clone()) {
+pub fn run(repo: Arc<dyn Repository>) -> Result<(), enums::UseIdentityError> {
+    if let Err(err) = execute(repo.clone()) {
         match err {
-            use_identity::Error::BadRequest | use_identity::Error::NotFound | use_identity::Error::Unknown => {
+            enums::UseIdentityError::BadRequest | enums::UseIdentityError::NotFound | enums::UseIdentityError::Unknown => {
                 return Err(err.into()); // Propagate the error
             }
         }

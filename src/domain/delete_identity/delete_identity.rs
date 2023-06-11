@@ -1,34 +1,25 @@
+use crate::domain::entities::Alias;
 use crate::repositories::enums::{DeleteIdentityError, FindIdentitiesError};
 use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
-use super::entities::{Alias};
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
 
-pub struct Response {
-    pub alias: String,
-    pub hostname: String,
-    pub config_path: String,
-}
+use super::enums::UseIdentityError;
+use super::structs::DeleteIdentityResponse;
 
-pub enum Error {
-    Unknown,
-    NotFound,
-    BadRequest,
-}
-
-pub fn execute(repo: Arc<dyn Repository>) -> Result<(), Error> {
+pub fn execute(repo: Arc<dyn Repository>) -> Result<(), UseIdentityError> {
     let identities = match repo.find_all() {
         Ok(identities) => Ok(identities
             .into_iter()
-            .map(|p| Response {
+            .map(|p| DeleteIdentityResponse {
                 alias: String::from(p.alias),
                 config_path: p.config_path.into(),
                 hostname: String::from(p.hostname),
             })
-            .collect::<Vec<Response>>()),
-        Err(FindIdentitiesError::Unknown) => Err(Error::Unknown),
+            .collect::<Vec<DeleteIdentityResponse>>()),
+        Err(FindIdentitiesError::Unknown) => Err(UseIdentityError::Unknown),
     };
 
     match identities {
@@ -48,10 +39,10 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), Error> {
            match Alias::try_from(identity_alias.to_owned()) {
                 Ok(alias) => match repo.delete(alias) {
                     Ok(()) => Ok(()),
-                    Err(DeleteIdentityError::NotFound) => Err(Error::NotFound),
-                    Err(DeleteIdentityError::Unknown) => Err(Error::Unknown),
+                    Err(DeleteIdentityError::NotFound) => Err(UseIdentityError::NotFound),
+                    Err(DeleteIdentityError::Unknown) => Err(UseIdentityError::Unknown),
                 },
-                _ => Err(Error::BadRequest),
+                _ => Err(UseIdentityError::BadRequest),
             }
         },
         Err(_err) => {
