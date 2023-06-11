@@ -1,3 +1,3 @@
-pub enum FindIdentitiesError {
+pub enum FindIdentitiesRepositoryError {
     Unknown,
 }

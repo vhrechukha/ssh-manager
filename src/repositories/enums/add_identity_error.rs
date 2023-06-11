@@ -1,4 +1,4 @@
-pub enum AddIdentityError {
+pub enum AddIdentityRepositoryError {
     Conflict,
     Unknown,
 }

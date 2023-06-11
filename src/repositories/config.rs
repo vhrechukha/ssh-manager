@@ -3,7 +3,7 @@ use std::fs;
 use crate::domain::entities::{ConfigIdentity, HostName, ConfigPath, Alias};
 use std::{path::PathBuf};
 
-use crate::repositories::enums::{FindIdentityError, FindIdentitiesError, AddIdentityError, DeleteIdentityError};
+use crate::repositories::enums::{FindIdentityRepositoryError, FindIdentitiesRepositoryError, AddIdentityRepositoryError, DeleteIdentityRepositoryError};
 
 pub struct FileRepository {
     data_file_path: PathBuf,
@@ -50,8 +50,8 @@ impl super::traits::Repository for FileRepository {
         alias: Alias,
         hostname: HostName,
         config_path: ConfigPath,
-    ) -> Result<ConfigIdentity, AddIdentityError> {
-        let mut identities = self.read_data().map_err(|_| AddIdentityError::Unknown)?;
+    ) -> Result<ConfigIdentity, AddIdentityRepositoryError> {
+        let mut identities = self.read_data().map_err(|_| AddIdentityRepositoryError::Unknown)?;
 
         let new_identity = ConfigIdentity {
             alias: alias.clone(),
@@ -60,36 +60,36 @@ impl super::traits::Repository for FileRepository {
         };
 
         if identities.iter().any(|i| i.alias == alias) {
-            return Err(AddIdentityError::Conflict);
+            return Err(AddIdentityRepositoryError::Conflict);
         }
 
         identities.push(new_identity.clone());
 
         if let Err(_) = self.write_data(&identities) {
-            return Err(AddIdentityError::Conflict);
+            return Err(AddIdentityRepositoryError::Conflict);
         }
 
         Ok(new_identity)
     }
 
-    fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityError> {
-        let identities = self.read_data().map_err(|_| FindIdentityError::NotFound)?;
+    fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityRepositoryError> {
+        let identities = self.read_data().map_err(|_| FindIdentityRepositoryError::NotFound)?;
 
         if let Some(identity) = identities.iter().find(|i| i.alias == alias) {
             Ok(identity.clone())
         } else {
-            Err(FindIdentityError::NotFound)
+            Err(FindIdentityRepositoryError::NotFound)
         }
     }
 
-    fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesError> {
-        let identities = self.read_data().map_err(|_| FindIdentitiesError::Unknown)?;
+    fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError> {
+        let identities = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
 
         Ok(identities)
     }
 
-    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesError> {
-        let identities = self.read_data().map_err(|_| FindIdentitiesError::Unknown)?;
+    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError> {
+        let identities = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
 
         let filtered_identities: Vec<ConfigIdentity> = identities
             .into_iter()
@@ -99,17 +99,17 @@ impl super::traits::Repository for FileRepository {
         Ok(filtered_identities)
     }
 
-    fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityError> {
-        let mut identities = self.read_data().map_err(|_| DeleteIdentityError::Unknown)?;
+    fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityRepositoryError> {
+        let mut identities = self.read_data().map_err(|_| DeleteIdentityRepositoryError::Unknown)?;
 
         if let Some(index) = identities.iter().position(|i| i.alias == alias) {
             identities.remove(index);
 
             if let Err(_) = self.write_data(&identities) {
-                return Err(DeleteIdentityError::Unknown);
+                return Err(DeleteIdentityRepositoryError::Unknown);
             }
         } else {
-            return Err(DeleteIdentityError::NotFound);
+            return Err(DeleteIdentityRepositoryError::NotFound);
         }
 
         Ok(())

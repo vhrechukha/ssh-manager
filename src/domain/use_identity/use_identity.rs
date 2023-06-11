@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::domain;
 use crate::domain::entities::{ConfigIdentity, Alias};
-use crate::repositories::enums::{FindIdentityError, FindIdentitiesError};
+use crate::repositories::enums::{FindIdentityRepositoryError, FindIdentitiesRepositoryError};
 use crate::repositories::traits::Repository;
 
 use dialoguer::Select;
@@ -24,7 +24,7 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
                 hostname: String::from(p.hostname),
             })
             .collect::<Vec<UseIdentityResponse>>()),
-        Err(FindIdentitiesError::Unknown) => Err(UseIdentityError::Unknown),
+        Err(FindIdentitiesRepositoryError::Unknown) => Err(UseIdentityError::Unknown),
     };
 
     match identities {
@@ -57,8 +57,8 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
                            config_path: String::from(config_path),
                            hostname: String::from(hostname),
                        }),
-                   Err(FindIdentityError::NotFound) => Err(UseIdentityError::NotFound),
-                   Err(FindIdentityError::Unknown) => Err(UseIdentityError::Unknown),
+                   Err(FindIdentityRepositoryError::NotFound) => Err(UseIdentityError::NotFound),
+                   Err(FindIdentityRepositoryError::Unknown) => Err(UseIdentityError::Unknown),
             }
                 Err(_) => todo!(), };
 
@@ -76,7 +76,7 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
                         hostname: String::from(p.hostname),
                     })
                     .collect::<Vec<UseIdentityResponse>>()),
-                Err(FindIdentitiesError::Unknown) => Err(UseIdentityError::Unknown),
+                Err(FindIdentitiesRepositoryError::Unknown) => Err(UseIdentityError::Unknown),
             };
             let identities_with_the_same_host_unwrapped = identities_with_the_same_host.unwrap();
             let identities_with_the_same_host_length = identities_with_the_same_host_unwrapped.len();

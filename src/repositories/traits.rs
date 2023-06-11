@@ -1,6 +1,6 @@
 use crate::domain::entities::{Alias, HostName, ConfigIdentity, ConfigPath};
 
-use crate::repositories::enums::{FindIdentityError, FindIdentitiesError, AddIdentityError, DeleteIdentityError};
+use crate::repositories::enums::{FindIdentityRepositoryError, FindIdentitiesRepositoryError, AddIdentityRepositoryError, DeleteIdentityRepositoryError};
 
 pub trait Repository {
     fn add(
@@ -8,13 +8,13 @@ pub trait Repository {
         alias: Alias,
         hostname: HostName,
         config_path: ConfigPath,
-    ) -> Result<ConfigIdentity, AddIdentityError>;
+    ) -> Result<ConfigIdentity, AddIdentityRepositoryError>;
 
-    fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityError>;
+    fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityRepositoryError>;
 
-    fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesError>;
+    fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError>;
 
-    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesError>;
+    fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError>;
 
-    fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityError>;
+    fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityRepositoryError>;
 }

@@ -1,5 +1,5 @@
 use crate::domain::entities::{ConfigIdentity, Alias, HostName, ConfigPath};
-use crate::repositories::enums::{AddIdentityError};
+use crate::repositories::enums::AddIdentityRepositoryError;
 use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
@@ -23,8 +23,8 @@ pub fn execute(repo: Arc<dyn Repository>, req: CreateIdentityRequest) -> Result<
                 config_path: String::from(config_path),
                 hostname: String::from(hostname),
             }),
-            Err(AddIdentityError::Conflict) => Err(CreateIdentityError::Conflict),
-            Err(AddIdentityError::Unknown) => Err(CreateIdentityError::Unknown),
+            Err(AddIdentityRepositoryError::Conflict) => Err(CreateIdentityError::Conflict),
+            Err(AddIdentityRepositoryError::Unknown) => Err(CreateIdentityError::Unknown),
         },
         _ => Err(CreateIdentityError::BadRequest),
     }

@@ -1,15 +1,15 @@
 use crate::domain::entities::Alias;
-use crate::repositories::enums::{DeleteIdentityError, FindIdentitiesError};
+use crate::repositories::enums::{DeleteIdentityRepositoryError, FindIdentitiesRepositoryError};
 use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
 
-use super::enums::UseIdentityError;
+use super::enums::DeleteIdentityError;
 use super::structs::DeleteIdentityResponse;
 
-pub fn execute(repo: Arc<dyn Repository>) -> Result<(), UseIdentityError> {
+pub fn execute(repo: Arc<dyn Repository>) -> Result<(), DeleteIdentityError> {
     let identities = match repo.find_all() {
         Ok(identities) => Ok(identities
             .into_iter()
@@ -19,12 +19,16 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), UseIdentityError> {
                 hostname: String::from(p.hostname),
             })
             .collect::<Vec<DeleteIdentityResponse>>()),
-        Err(FindIdentitiesError::Unknown) => Err(UseIdentityError::Unknown),
+        Err(FindIdentitiesRepositoryError::Unknown) => Err(DeleteIdentityError::Unknown),
     };
 
     match identities {
         Ok(val) => {
-            let selections: &Vec<String> = &val.into_iter().map(|x| x.alias.to_string()).collect();
+            let selections: Vec<String> = val.into_iter().map(|x| x.alias.to_string()).collect();
+
+            if selections.is_empty() {
+                return Err(DeleteIdentityError::NotFound);
+            }
 
             // Move it to cli
             let selection = Select::with_theme(&ColorfulTheme::default())
@@ -39,10 +43,10 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), UseIdentityError> {
            match Alias::try_from(identity_alias.to_owned()) {
                 Ok(alias) => match repo.delete(alias) {
                     Ok(()) => Ok(()),
-                    Err(DeleteIdentityError::NotFound) => Err(UseIdentityError::NotFound),
-                    Err(DeleteIdentityError::Unknown) => Err(UseIdentityError::Unknown),
+                    Err(DeleteIdentityRepositoryError::NotFound) => Err(DeleteIdentityError::NotFound),
+                    Err(DeleteIdentityRepositoryError::Unknown) => Err(DeleteIdentityError::Unknown),
                 },
-                _ => Err(UseIdentityError::BadRequest),
+                _ => Err(DeleteIdentityError::BadRequest),
             }
         },
         Err(_err) => {

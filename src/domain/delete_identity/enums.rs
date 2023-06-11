@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum UseIdentityError {
+pub enum DeleteIdentityError {
     Unknown,
     NotFound,
     BadRequest,

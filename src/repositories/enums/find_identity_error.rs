@@ -1,4 +1,4 @@
-pub enum FindIdentityError {
+pub enum FindIdentityRepositoryError {
     NotFound,
     Unknown,
 }
