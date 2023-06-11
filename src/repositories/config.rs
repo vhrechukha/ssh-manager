@@ -3,25 +3,7 @@ use std::fs;
 use crate::domain::entities::{ConfigIdentity, HostName, ConfigPath, Alias};
 use std::{path::PathBuf};
 
-pub enum AddIdentityError {
-    Conflict,
-    Unknown,
-}
-
-pub enum FindIdentityError {
-    NotFound,
-    Unknown,
-}
-
-pub enum FindIdentitiesError {
-    Unknown,
-}
-
-pub enum DeleteError {
-    Unknown,
-    NotFound,
-}
-
+use crate::repositories::enums::{FindIdentityError, FindIdentitiesError, AddIdentityError, DeleteIdentityError};
 
 pub struct FileRepository {
     data_file_path: PathBuf,
@@ -117,17 +99,17 @@ impl super::traits::Repository for FileRepository {
         Ok(filtered_identities)
     }
 
-    fn delete(&self, alias: Alias) -> Result<(), DeleteError> {
-        let mut identities = self.read_data().map_err(|_| DeleteError::Unknown)?;
+    fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityError> {
+        let mut identities = self.read_data().map_err(|_| DeleteIdentityError::Unknown)?;
 
         if let Some(index) = identities.iter().position(|i| i.alias == alias) {
             identities.remove(index);
 
             if let Err(_) = self.write_data(&identities) {
-                return Err(DeleteError::Unknown);
+                return Err(DeleteIdentityError::Unknown);
             }
         } else {
-            return Err(DeleteError::NotFound);
+            return Err(DeleteIdentityError::NotFound);
         }
 
         Ok(())

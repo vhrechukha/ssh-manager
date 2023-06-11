@@ -1,4 +1,4 @@
-use crate::repositories::config::{FindIdentitiesError, DeleteError};
+use crate::repositories::enums::{DeleteIdentityError, FindIdentitiesError};
 use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
@@ -48,8 +48,8 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), Error> {
            match Alias::try_from(identity_alias.to_owned()) {
                 Ok(alias) => match repo.delete(alias) {
                     Ok(()) => Ok(()),
-                    Err(DeleteError::NotFound) => Err(Error::NotFound),
-                    Err(DeleteError::Unknown) => Err(Error::Unknown),
+                    Err(DeleteIdentityError::NotFound) => Err(Error::NotFound),
+                    Err(DeleteIdentityError::Unknown) => Err(Error::Unknown),
                 },
                 _ => Err(Error::BadRequest),
             }

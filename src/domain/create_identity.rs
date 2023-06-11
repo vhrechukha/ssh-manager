@@ -1,5 +1,5 @@
 use crate::domain::entities::{ConfigIdentity, Alias, HostName, ConfigPath};
-use crate::repositories::config::{AddIdentityError};
+use crate::repositories::enums::{AddIdentityError};
 use crate::repositories::traits::Repository;
 use std::convert::TryFrom;
 use std::sync::Arc;
