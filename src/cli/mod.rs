@@ -1,9 +1,10 @@
 mod add_identity;
 mod use_identity;
 mod delete_identity;
+mod prompts;
 
 use crate::{repositories::config::Repository, domain};
-use dialoguer::{theme::ColorfulTheme, Input, Select};
+use dialoguer::{theme::ColorfulTheme, Select};
 use std::sync::Arc;
 
 pub fn run(repo: Arc<dyn Repository>) {
@@ -38,26 +39,5 @@ pub fn run(repo: Arc<dyn Repository>) {
             3 => break,
             _ => continue,
         };
-    }
-}
-
-pub fn prompt_alias() -> Result<String, ()> {
-    match Input::new().with_prompt("Alias for your identity").interact_text() {
-        Ok(alias) => Ok(alias),
-        _ => Err(()),
-    }
-}
-
-pub fn prompt_hostname() -> Result<String, ()> {
-    match Input::new().with_prompt("Hostname").interact_text() {
-        Ok(hostname) => Ok(hostname),
-        _ => Err(()),
-    }
-}
-
-pub fn prompt_path() -> Result<String, ()> {
-    match Input::new().with_prompt("Global path").interact_text() {
-        Ok(path) => Ok(path),
-        _ => Err(()),
     }
 }

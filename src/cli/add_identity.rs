@@ -1,4 +1,4 @@
-use crate::cli::{prompt_alias, prompt_hostname, prompt_path};
+use crate::cli::prompts::{prompt_alias, prompt_hostname, prompt_path};
 use crate::domain::create_identity;
 use crate::repositories::config::Repository;
 use std::sync::Arc;
