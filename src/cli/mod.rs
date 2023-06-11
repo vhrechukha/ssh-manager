@@ -20,7 +20,7 @@ pub fn run(repo: Arc<dyn Repository>) {
                 if let Err(err) = use_identity::run(repo.clone()) {
                     match err {
                         domain::use_identity::enums::UseIdentityError::NotFound => {
-                            println!("The Config Identities does not exist");
+                            println!("Config Identities do not exist");
                         }
                         domain::use_identity::enums::UseIdentityError::Unknown => {
                             println!("An unknown error occurred");

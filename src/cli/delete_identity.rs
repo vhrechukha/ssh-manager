@@ -8,7 +8,7 @@ pub fn run(repo: Arc<dyn Repository>) {
     match execute(repo) {
         Ok(()) => println!("This Config Identity has been deleted"),
         Err(enums::DeleteIdentityError::BadRequest) => println!("The request is invalid"),
-        Err(enums::DeleteIdentityError::NotFound) => println!("This Config Identity does not exist"),
+        Err(enums::DeleteIdentityError::NotFound) => println!("Config Identities do not exist"),
         Err(enums::DeleteIdentityError::Unknown) => println!("An unknown error occurred"),
     }
 }
