@@ -8,7 +8,7 @@ use std::sync::Arc;
 pub fn run(repo: Arc<dyn Repository>) -> Result<(), enums::UseIdentityError> {
     if let Err(err) = execute(repo.clone()) {
         match err {
-            enums::UseIdentityError::BadRequest | enums::UseIdentityError::NotFound | enums::UseIdentityError::Unknown => {
+            enums::UseIdentityError::NotFound | enums::UseIdentityError::Unknown => {
                 return Err(err.into()); // Propagate the error
             }
         }

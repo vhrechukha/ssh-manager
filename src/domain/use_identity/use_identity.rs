@@ -58,7 +58,6 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
                            hostname: String::from(hostname),
                        }),
                    Err(FindIdentityRepositoryError::NotFound) => Err(UseIdentityError::NotFound),
-                   Err(FindIdentityRepositoryError::Unknown) => Err(UseIdentityError::Unknown),
             }
                 Err(_) => todo!(), };
 

@@ -19,17 +19,11 @@ pub fn run(repo: Arc<dyn Repository>) {
             0 => {
                 if let Err(err) = use_identity::run(repo.clone()) {
                     match err {
-                        domain::use_identity::enums::UseIdentityError::BadRequest => {
-                            println!("The request is invalid");
-                        }
                         domain::use_identity::enums::UseIdentityError::NotFound => {
                             println!("The Config Identities does not exist");
                         }
                         domain::use_identity::enums::UseIdentityError::Unknown => {
                             println!("An unknown error occurred");
-                        }
-                        _ => {
-                            println!("Error: {:?}", err);
                         }
                     }
                     continue; // Restart the loop and prompt for index again
