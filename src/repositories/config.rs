@@ -1,9 +1,11 @@
 use std::fs;
 
-use crate::domain::entities::{ConfigIdentity, HostName, ConfigPath, Alias};
+use crate::domain::{entities::{ConfigIdentity, HostName, ConfigPath, Alias}, switch_language::enums::Languages};
 use std::{path::PathBuf};
 
 use crate::repositories::enums::{FindIdentityRepositoryError, FindIdentitiesRepositoryError, AddIdentityRepositoryError, DeleteIdentityRepositoryError};
+
+use super::structs::ConfigData;
 
 pub struct FileRepository {
     data_file_path: PathBuf,
@@ -26,21 +28,52 @@ impl FileRepository {
         }
     }
 
-    fn read_data(&self) -> Result<Vec<ConfigIdentity>, std::io::Error> {
+    pub fn read_data(&self) -> Result<(String, Vec<ConfigIdentity>), std::io::Error> {
+
         if !self.data_file_path.exists() {
-            // If the file doesn't exist, return an empty vector
-            return Ok(Vec::new());
+            return Ok((String::default(), Vec::new()));
         }
-
+    
         let data = fs::read_to_string(&self.data_file_path)?;
-        let identities: Vec<ConfigIdentity> = serde_json::from_str(&data)?;
 
-        Ok(identities)
+        let config_data: ConfigData = match serde_json::from_str(&data) {
+            Ok(data) => data,
+            Err(_) => {
+                return Ok((String::default(), Vec::new()));
+            }
+        };
+
+        let language = if config_data.language.is_empty() {
+            Languages::En.as_str().to_owned()
+        } else {
+            config_data.language
+        };
+
+        Ok((language, config_data.identities))
     }
 
-    fn write_data(&self, identities: &[ConfigIdentity]) -> Result<(), std::io::Error> {
-        let data = serde_json::to_string(identities)?;
-        fs::write(&self.data_file_path, data)
+    fn write_data(
+        &self,
+        identities: Option<&[ConfigIdentity]>,
+        language: Option<&str>,
+    ) -> Result<(), std::io::Error> {
+        let mut data: serde_json::Value = if self.data_file_path.exists() {
+            let existing_data = fs::read_to_string(&self.data_file_path)?;
+            serde_json::from_str(&existing_data)?
+        } else {
+            serde_json::json!({})
+        };
+    
+        if let Some(identities) = identities {
+            data["identities"] = serde_json::json!(identities);
+        }
+    
+        if let Some(lang) = language {
+            data["language"] = serde_json::json!(lang);
+        }
+    
+        let serialized_data = serde_json::to_string_pretty(&data)?;
+        fs::write(&self.data_file_path, serialized_data)
     }
 }
 
@@ -51,7 +84,7 @@ impl super::traits::Repository for FileRepository {
         hostname: HostName,
         config_path: ConfigPath,
     ) -> Result<ConfigIdentity, AddIdentityRepositoryError> {
-        let mut identities = self.read_data().map_err(|_| AddIdentityRepositoryError::Unknown)?;
+        let (_, mut identities) = self.read_data().map_err(|_| AddIdentityRepositoryError::Unknown)?;
 
         let new_identity = ConfigIdentity {
             alias: alias.clone(),
@@ -65,7 +98,7 @@ impl super::traits::Repository for FileRepository {
 
         identities.push(new_identity.clone());
 
-        if let Err(_) = self.write_data(&identities) {
+        if let Err(_) = self.write_data(Some(&identities), None) {
             return Err(AddIdentityRepositoryError::Conflict);
         }
 
@@ -73,7 +106,7 @@ impl super::traits::Repository for FileRepository {
     }
 
     fn find_one(&self, alias: Alias) -> Result<ConfigIdentity, FindIdentityRepositoryError> {
-        let identities = self.read_data().map_err(|_| FindIdentityRepositoryError::NotFound)?;
+        let (_, identities) = self.read_data().map_err(|_| FindIdentityRepositoryError::NotFound)?;
 
         if let Some(identity) = identities.iter().find(|i| i.alias == alias) {
             Ok(identity.clone())
@@ -83,13 +116,13 @@ impl super::traits::Repository for FileRepository {
     }
 
     fn find_all(&self) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError> {
-        let identities = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
+        let (_, identities) = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
 
         Ok(identities)
     }
 
     fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError> {
-        let identities = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
+        let (_, identities) = self.read_data().map_err(|_| FindIdentitiesRepositoryError::Unknown)?;
 
         let filtered_identities: Vec<ConfigIdentity> = identities
             .into_iter()
@@ -100,12 +133,12 @@ impl super::traits::Repository for FileRepository {
     }
 
     fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityRepositoryError> {
-        let mut identities = self.read_data().map_err(|_| DeleteIdentityRepositoryError::Unknown)?;
+        let (_, mut identities) = self.read_data().map_err(|_| DeleteIdentityRepositoryError::Unknown)?;
 
         if let Some(index) = identities.iter().position(|i| i.alias == alias) {
             identities.remove(index);
 
-            if let Err(_) = self.write_data(&identities) {
+            if let Err(_) = self.write_data(Some(&identities), None) {
                 return Err(DeleteIdentityRepositoryError::Unknown);
             }
         } else {
@@ -113,6 +146,10 @@ impl super::traits::Repository for FileRepository {
         }
 
         Ok(())
+    }
+
+    fn write_language(&self, language: &str) -> Result<(), std::io::Error> {
+        self.write_data(None, Some(language))
     }
 }
 

@@ -1,6 +1,7 @@
 mod cli;
 mod domain;
 mod repositories;
+mod infrastructure;
 
 use std::sync::Arc;
 use repositories::config::{FileRepository};

@@ -17,4 +17,6 @@ pub trait Repository {
     fn find_all_with_hostname(&self, hostname: HostName) -> Result<Vec<ConfigIdentity>, FindIdentitiesRepositoryError>;
 
     fn delete(&self, alias: Alias) -> Result<(), DeleteIdentityRepositoryError>;
+
+    fn write_language(&self, language: &str) -> Result<(), std::io::Error>;
 }

@@ -9,12 +9,11 @@ pub fn run(repo: Arc<dyn Repository>) -> Result<(), enums::UseIdentityError> {
     if let Err(err) = execute(repo.clone()) {
         match err {
             enums::UseIdentityError::NotFound | enums::UseIdentityError::Unknown => {
-                return Err(err.into()); // Propagate the error
+                return Err(err.into());
             }
         }
     }
     
-    println!("Added using of Config Identity with such alias");
     Ok(())
 }
 

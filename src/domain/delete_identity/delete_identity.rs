@@ -8,6 +8,7 @@ use dialoguer::theme::ColorfulTheme;
 
 use super::enums::DeleteIdentityError;
 use super::structs::DeleteIdentityResponse;
+use crate::{infrastructure::i18n::translate};
 
 pub fn execute(repo: Arc<dyn Repository>) -> Result<(), DeleteIdentityError> {
     let identities = match repo.find_all() {
@@ -32,7 +33,7 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<(), DeleteIdentityError> {
 
             // Move it to cli
             let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Pick your Config Identity")
+            .with_prompt(translate("delete_identity:domain.chooseConfig"))
             .default(0)
             .items(&selections[..])
             .interact()

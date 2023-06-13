@@ -11,3 +11,6 @@ dialoguer = "*"
 serde = { version = "1.0.129", features = ["derive"] }
 clap = "*"
 execute = "*"
+i18n-embed = { version = "*", features = ["fluent-system", "desktop-requester"]}
+once_cell = "*"
+lazy_static = "1.4"

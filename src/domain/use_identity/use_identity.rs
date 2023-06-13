@@ -13,6 +13,7 @@ use execute::Execute;
 
 use super::enums::UseIdentityError;
 use super::structs::UseIdentityResponse;
+use crate::{infrastructure::i18n::translate};
 
 pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIdentityError> {
     let identities = match repo.find_all() {
@@ -24,7 +25,9 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
                 hostname: String::from(p.hostname),
             })
             .collect::<Vec<UseIdentityResponse>>()),
-        Err(FindIdentitiesRepositoryError::Unknown) => Err(UseIdentityError::Unknown),
+        Err(_err) => {
+            Err(UseIdentityError::Unknown)
+        },
     };
 
     match identities {
@@ -36,14 +39,12 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
             }
 
             let selection = Select::with_theme(&ColorfulTheme::default())
-            .with_prompt("Pick your Config Identity")
+            .with_prompt(translate("use_identity:domain.chooseIdentity"))
             .default(0)
             .items(&selections[..])
             .interact()
             .unwrap();
     
-            println!("Your choose this identity: {}", selections[selection]);
-
             let identity_alias = &selections[selection];
 
             let config_identity: Result<UseIdentityResponse, UseIdentityError> = match Alias::try_from(identity_alias.to_owned()) {
@@ -104,8 +105,6 @@ pub fn execute(repo: Arc<dyn Repository>) -> Result<UseIdentityResponse, UseIden
            return Ok(unwrapped_config_identity);
         },
         Err(_err) => {
-            println!("UseIdentityError: {:#?}", _err);
-
             panic!()
         }
     }
