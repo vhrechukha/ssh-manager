@@ -1,0 +1,8 @@
+{
+    "errors": {
+        "promptError": "An error occurred during the prompt",
+        "requestInvalidError": "The request is invalid",
+        "unknownError": "An unknown error occurred",
+        "noConfigIdentitiesFound": "Config Identities do not exist"
+    }
+}

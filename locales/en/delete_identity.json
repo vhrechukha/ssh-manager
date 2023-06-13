@@ -1,0 +1,8 @@
+{
+    "cli": {
+        "successful": "This Config Identity has been deleted"
+    },
+    "domain": {
+        "chooseConfig": "Pick your Config Identity to delete"
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "menu": {
+        "title": "Make your choice",
+        "useIdentity": "Use Identity",
+        "addIdentity": "Add Identity", 
+        "deleteIdentity": "Delete Identity",
+        "switchLanguage": "Switch language",
+        "exit": "Exit"
+    },
+    "inputs": {
+        "alias": "Alias",
+        "hostname": "Hostname",
+        "globalPath": "Global path to the key"
+    }
+}

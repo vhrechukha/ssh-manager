@@ -1,0 +1,6 @@
+{
+    "cli": {
+        "successful": "Added Config Identity with such Alias: ",
+        "alreadyExistsError": "This Config Identity already exists"
+    }
+}
