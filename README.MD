@@ -25,7 +25,7 @@ brew install ssh-manager
 3. **Connect via SSH Configuration**: Utilize the *Use Configuration* feature to connect to previously added configurations with auto-removing existing configurations for the same host. The SSH Manager automatically handles the management of configurations, allowing you to seamlessly switch between different SSH connections without any hassle.
 4. **Switch Language**: Users can change the language interface to their preferred language.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/TtXrencNSL0" frameborder="0" allowfullscreen></iframe>
+[![Video Demo](https://img.youtube.com/vi/TtXrencNSL0/0.jpg)](https://www.youtube.com/watch?v=TtXrencNSL0)
 
 **Note: Global Path Format**
 
