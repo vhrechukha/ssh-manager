@@ -8,6 +8,11 @@ use lazy_static::lazy_static;
 
 use crate::domain::switch_language::enums::Languages;
 use crate::repositories::config::FileRepository;
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "locales"]
+struct Locales;
 
 pub struct Translations {
     data: HashMap<String, HashMap<String, String>>,
@@ -45,29 +50,21 @@ impl Translations {
         flattened_translations
     }
     
-    fn load_translations(language: &str) -> Result<HashMap<String, String>, io::Error> {
-        let folder_path = format!("locales/{}", language);
-        let entries = read_dir(folder_path)?;
+    fn load_translations(language: &str) -> Result<HashMap<String, String>, std::io::Error> {
+        let mut translations = HashMap::new();
     
-        let translations = entries.filter_map(|entry| {
-            let entry = entry.ok()?;
-            let file_path = entry.path();
-            let file_name = file_path.file_name()?.to_string_lossy().into_owned();
-            if file_name.ends_with(".json") {
-                let contents = read_to_string(file_path).ok()?;
-                let json_translations: HashMap<String, HashMap<String, String>> =
-                    serde_json::from_str(&contents).ok()?;
-                
-                let flattened_translations = Self::flatten_translations(&file_name, json_translations);
-                
-                Some(flattened_translations)
-            } else {
-                None
+        for entry in Locales::iter() {
+            let file_path = entry.as_ref();
+            let language_part = file_path.split('/').next().unwrap();
+
+            if file_path.ends_with(".json") && language_part == language {                
+                let contents = String::from_utf8_lossy(Locales::get(entry.as_ref()).unwrap().as_ref()).to_string();
+                let json_translations: HashMap<String, HashMap<String, String>> = serde_json::from_str(&contents).unwrap();
+                let flattened_translations = Self::flatten_translations(&file_path, json_translations);
+
+                translations.extend(flattened_translations);
             }
-        }).fold(HashMap::new(), |mut acc, map| {
-            acc.extend(map);
-            acc
-        });
+        }
     
         Ok(translations)
     }

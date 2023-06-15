@@ -2,7 +2,6 @@
 name = "ssh-manager"
 version = "0.1.0"
 edition = "2018"
-include = ["locales/**"]
 
 [dependencies]
 fs = "*"
@@ -15,3 +14,4 @@ execute = "*"
 i18n-embed = { version = "*", features = ["fluent-system", "desktop-requester"]}
 once_cell = "*"
 lazy_static = "1.4"
+rust-embed = "*"
